@@ -4,9 +4,12 @@ from pydantic import BaseModel, Field
 class BaseProduct(BaseModel):
     id:int=Field(example=1)
     product_name:str=Field(example='Milk')
+    product_name:str=Field(example="Самсунг")
+    product_price:float=Field(example=86000)
+    description:str|None=Field(example="Описание")
+    amount:int=Field(example=500)
 
-class BasePlanet(BaseModel):
+
+class BaseCategory(BaseModel):
     id:int=Field(example=1)
-    planet_name:str=Field(example="Земля")
-    planet_mass:float=Field(example=5.9)
-    planet_diameter:float=Field(example=12756)
+    category_name:str=Field(example='Телефон')

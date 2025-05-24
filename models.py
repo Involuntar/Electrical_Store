@@ -1,5 +1,6 @@
 from database import Base
 from sqlalchemy import Column, Integer, String, Float, DECIMAL, ForeignKey, Text, Date
+from sqlalchemy.orm import relationship
 
 
 class Category(Base):
@@ -8,15 +9,16 @@ class Category(Base):
     category_name = Column(String(20))
 
 
-class Good(Base):
-    __tablename__="goods"
+class Product(Base):
+    __tablename__="products"
     id = Column(Integer, primary_key=True, autoincrement=True)
-    good_name = Column(String(50), unique=True)
-    good_price = Column(DECIMAL(10, 2), default=0)
+    product_name = Column(String(50), unique=True)
+    product_price = Column(DECIMAL(10, 2), default=0)
     category_id = Column(Integer, ForeignKey("categories.id"), nullable=True)
     description = Column(Text, nullable=True)
     amount = Column(Integer, default=0)
 
+    category = relationship("Category", backref="products")
 
 class User(Base):
     __tablename__="users"
@@ -45,7 +47,7 @@ class Order(Base):
 class Review(Base):
     __tablename__="reviews"
     id = Column(Integer, primary_key=True, autoincrement=True)
-    good_id = Column(Integer, ForeignKey("goods.id"))
+    product_id = Column(Integer, ForeignKey("products.id"))
     user_id = Column(Integer, ForeignKey("users.id"))
     rating = Column(Float)
     description = Column(Text, nullable=True)
