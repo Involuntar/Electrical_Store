@@ -26,7 +26,7 @@ class User(Base):
     firstname = Column(String(20))
     lastname = Column(String(20))
     username = Column(String(20))
-    password = Column(String(20))
+    password = Column(String(255))
 
 
 class Status(Base):
@@ -41,7 +41,10 @@ class Order(Base):
     user_id = Column(Integer, ForeignKey("users.id"))
     status_id = Column(Integer, ForeignKey("statuses.id"))
     summ = Column(DECIMAL(10, 2))
-    date = Column(Date)
+    order_date = Column(Date)
+
+    user = relationship("User", backref="orders")
+    status = relationship("Status", backref="orders")
 
 
 class Review(Base):

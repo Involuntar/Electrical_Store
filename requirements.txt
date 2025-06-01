@@ -1,5 +1,6 @@
 fastapi[standard]==0.113.0
-sqlalchemy
-pydantic-settings
-pymysql
-cryptography
+sqlalchemy==2.0.41
+pydantic-settings==2.9.1
+pymysql==1.1.1
+cryptography==45.0.3
+bcrypt==4.3.0

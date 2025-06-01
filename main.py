@@ -9,7 +9,7 @@ import pyd
 app=FastAPI()
 
 # Товары
-# Получение
+# Получение товара
 @app.get("/api/products", response_model=List[pyd.SchemeProduct])
 def get_products(limit:None|int=Query(None), page:None|int=Query(1), category:None|int=Query(None), minPrice:None|float=Query(None), db:Session=Depends(get_db)):
     products = db.query(m.Product)
@@ -28,7 +28,7 @@ def get_products(limit:None|int=Query(None), page:None|int=Query(1), category:No
         raise HTTPException(404, "Товары не найдены!")
     return all_product
 
-# Создание
+# Создание товара
 @app.post("/api/product", response_model=pyd.SchemeProduct)
 def create_product(product:pyd.CreateProduct, db:Session=Depends(get_db)):
     product_dublicate = db.query(m.Product).filter(
@@ -48,12 +48,14 @@ def create_product(product:pyd.CreateProduct, db:Session=Depends(get_db)):
     return product_db
 
 
-# Изменение
-@app.put("/api/prodcut/{id}", response_model=pyd.SchemeProduct)
+# Изменение товара
+@app.put("/api/product/{id}", response_model=pyd.SchemeProduct)
 def update_product(id:int, product:pyd.CreateProduct, db:Session=Depends(get_db)):
     product_db = db.query(m.Product).filter(
         m.Product.id == id
     ).first()
+    if not product_db:
+        raise HTTPException(404, "Товар не найден!")
     product_db.product_name = product.product_name
     product_db.product_price = product.product_price
     product_db.category_id = product.category_id
@@ -63,3 +65,23 @@ def update_product(id:int, product:pyd.CreateProduct, db:Session=Depends(get_db)
     db.add(product_db)
     db.commit()
     return product_db
+
+# Удаление товара
+@app.delete("/api/product/{id}")
+def delete_product(id:int, db:Session=Depends(get_db)):
+    product_db = db.query(m.Product).filter(
+        m.Product.id == id
+    ).first()
+    if not product_db:
+        raise HTTPException(404, "Товар не найден!")
+    db.delete(product_db)
+    db.commit()
+    return {"detail": "Товар удалён!"}
+
+
+# Заказы
+# Получение заказа
+@app.get("/api/orders", response_model=List[pyd.SchemeOrder])
+def get_orders(db:Session=Depends(get_db)):
+    orders = db.query(m.Order).all()
+    return orders

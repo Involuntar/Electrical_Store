@@ -3,3 +3,7 @@ from typing import List
 
 class SchemeProduct(BaseProduct):
     category: BaseCategory
+
+class SchemeOrder(BaseOrder):
+    user: BaseUser
+    status: BaseStatus
