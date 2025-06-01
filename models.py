@@ -14,7 +14,7 @@ class Product(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     product_name = Column(String(50), unique=True)
     product_price = Column(DECIMAL(10, 2), default=0)
-    category_id = Column(Integer, ForeignKey("categories.id"), nullable=True)
+    category_id = Column(Integer, ForeignKey("categories.id"))
     description = Column(Text, nullable=True)
     amount = Column(Integer, default=0)
 

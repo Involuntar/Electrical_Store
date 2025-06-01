@@ -9,6 +9,7 @@ import pyd
 app=FastAPI()
 
 # Товары
+# Получение
 @app.get("/api/products", response_model=List[pyd.SchemeProduct])
 def get_products(limit:None|int=Query(None), page:None|int=Query(1), category:None|int=Query(None), minPrice:None|float=Query(None), db:Session=Depends(get_db)):
     products = db.query(m.Product)
@@ -22,4 +23,43 @@ def get_products(limit:None|int=Query(None), page:None|int=Query(1), category:No
         )
     if limit:
         products = products[(page - 1) * limit:page * limit]
-    return products
+    all_product = products.all()
+    if not all_product:
+        raise HTTPException(404, "Товары не найдены!")
+    return all_product
+
+# Создание
+@app.post("/api/product", response_model=pyd.SchemeProduct)
+def create_product(product:pyd.CreateProduct, db:Session=Depends(get_db)):
+    product_dublicate = db.query(m.Product).filter(
+        m.Product.product_name == product.product_name
+    ).first()
+    if product_dublicate:
+        raise HTTPException(400, "Такой товар уже существует!")
+    product_db = m.Product()
+    product_db.product_name = product.product_name
+    product_db.product_price = product.product_price
+    product_db.category_id = product.category_id
+    product_db.description = product.description
+    product_db.amount = product.amount
+
+    db.add(product_db)
+    db.commit()
+    return product_db
+
+
+# Изменение
+@app.put("/api/prodcut/{id}", response_model=pyd.SchemeProduct)
+def update_product(id:int, product:pyd.CreateProduct, db:Session=Depends(get_db)):
+    product_db = db.query(m.Product).filter(
+        m.Product.id == id
+    ).first()
+    product_db.product_name = product.product_name
+    product_db.product_price = product.product_price
+    product_db.category_id = product.category_id
+    product_db.description = product.description
+    product_db.amount = product.amount
+
+    db.add(product_db)
+    db.commit()
+    return product_db
