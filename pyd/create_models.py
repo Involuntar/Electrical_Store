@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-
+from datetime import date, datetime
 
 class CreateProduct(BaseModel):
     product_name:str=Field(example="Самсунг")
@@ -8,3 +8,8 @@ class CreateProduct(BaseModel):
     category_id:int=Field(example="1")
     amount:int=Field(example=500)
 
+class CreateOrder(BaseModel):
+    summ:float=Field(example=21673)
+    order_date:date=Field(example="2025-06-11", default=datetime.now().strftime("%Y-%m-%d"))
+    user_id:int=Field(example=1)
+    status_id:int=Field(example=1, default=1)
