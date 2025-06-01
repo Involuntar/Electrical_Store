@@ -158,3 +158,38 @@ def delete_order(id:int, db:Session=Depends(get_db)):
     db.delete(order_db)
     db.commit()
     return {"detail": "Заказ удалён"}
+
+
+# Отзывы
+# Получение отзывов
+@app.get("/api/reviews", response_model=List[pyd.SchemeReview])
+def get_reviews(db:Session=Depends(get_db)):
+    reviews = db.query(m.Review).all()
+    if not reviews:
+        raise HTTPException(404, "Отзывы не найдены!")
+    return reviews
+
+
+# Получение отзыва
+@app.get("/api/review", response_model=pyd.SchemeReview)
+def get_review(id:int, db:Session=Depends(get_db)):
+    review_db = db.query(m.Review).filter(
+        m.Review.id == id
+    ).first()
+    if not review_db:
+        raise HTTPException(404, "Отзыв не найден!")
+    return review_db
+
+
+# Создание отзыва
+@app.post("/api/review", response_model=pyd.SchemeReview)
+def create_review(review:pyd.CreateReview, db:Session=Depends(get_db)):
+    review_db = m.Review()
+    review_db.rating = review.rating
+    review_db.product_id = review.product_id
+    review_db.user_id = review.user_id
+    review_db.description = review.description
+
+    db.add(review_db)
+    db.commit()
+    return review_db

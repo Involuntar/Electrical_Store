@@ -31,3 +31,9 @@ class BaseUser(BaseModel):
 class BaseStatus(BaseModel):
     id:int=Field(example=1)
     status_name:str=Field(example="В доставке")
+
+
+class BaseReview(BaseModel):
+    id:int=Field(example=1)
+    rating:float=Field(example=4.5)
+    description:str=Field(example="Хороший товар!")

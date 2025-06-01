@@ -7,3 +7,7 @@ class SchemeProduct(BaseProduct):
 class SchemeOrder(BaseOrder):
     user: BaseUser
     status: BaseStatus
+
+class SchemeReview(BaseReview):
+    user: BaseUser
+    product: SchemeProduct

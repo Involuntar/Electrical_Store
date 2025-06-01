@@ -54,3 +54,6 @@ class Review(Base):
     user_id = Column(Integer, ForeignKey("users.id"))
     rating = Column(Float)
     description = Column(Text, nullable=True)
+
+    product = relationship("Product", backref="reviews")
+    user = relationship("User", backref="reviews")
