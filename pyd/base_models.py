@@ -36,4 +36,4 @@ class BaseStatus(BaseModel):
 class BaseReview(BaseModel):
     id:int=Field(example=1)
     rating:float=Field(example=4.5)
-    description:str=Field(example="Хороший товар!")
+    description:str|None=Field(example="Хороший товар!")

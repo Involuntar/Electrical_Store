@@ -16,6 +16,6 @@ class CreateOrder(BaseModel):
 
 class CreateReview(BaseModel):
     rating:float=Field(example=4.5, ge=0, le=5)
-    description:str=Field(example="Хороший товар!", default=None)
+    description:str|None=Field(example="Хороший товар!", default=None)
     product_id:int=Field(example=1)
     user_id:int=Field(example=1)

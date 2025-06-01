@@ -193,3 +193,35 @@ def create_review(review:pyd.CreateReview, db:Session=Depends(get_db)):
     db.add(review_db)
     db.commit()
     return review_db
+
+
+# Изменение отзыва
+@app.put("/api/review/{id}", response_model=pyd.SchemeReview)
+def edit_review(id:int, review:pyd.CreateReview, db:Session=Depends(get_db)):
+    review_db = db.query(m.Review).filter(
+        m.Review.id == id
+    ).first()
+    if not review_db:
+        raise HTTPException(404, "Отзыв не найден!")
+    review_db.rating = review.rating
+    review_db.product_id = review.product_id
+    review_db.user_id = review.user_id
+    review_db.description = review.description
+
+    db.add(review_db)
+    db.commit()
+    return review_db
+
+
+# Удаление отзыва
+@app.delete("/api/review/{id}")
+def delete_review(id:int, db:Session=Depends(get_db)):
+    review_db = db.query(m.Review).filter(
+        m.Review.id == id
+    ).first()
+    if not review_db:
+        raise HTTPException(404, "Отзыв не найден!")
+    
+    db.delete(review_db)
+    db.commit()
+    return {"detail": "Отзыв удалён"}
