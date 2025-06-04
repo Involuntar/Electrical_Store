@@ -19,3 +19,14 @@ class CreateReview(BaseModel):
     description:str|None=Field(example="Хороший товар!", default=None)
     product_id:int=Field(example=1)
     user_id:int=Field(example=1)
+
+class CreateUser(BaseModel):
+    firstname:str=Field(example="Иван")
+    lastname:str=Field(example="Иванов")
+    username:str=Field(example="1v4n")
+    password:str=Field(example="1v4n")
+    role_id:int|None=Field(example=1, default=1)
+
+class LoginUser(BaseModel):
+    username:str=Field(example="1v4n")
+    password:str=Field(example="1v4n")

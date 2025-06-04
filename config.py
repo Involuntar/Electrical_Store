@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     DB_PORT:str='3306'
     DB_USER:str='root'
     DB_PASSWORD:str='password'
+    TOKEN_SECRET:str='token'
     model_config=SettingsConfigDict(env_file='.env')
 
 settings = Settings()

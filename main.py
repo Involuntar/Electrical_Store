@@ -4,9 +4,44 @@ from sqlalchemy.orm import Session
 import models as m
 from typing import List
 import pyd
+from auth import auth_handler
+import bcrypt
 
 
 app=FastAPI()
+
+# Авторизация
+# Регистрация
+@app.post("/register", response_model=pyd.SchemeUser)
+def  user_register(user: pyd.CreateUser, db:Session=Depends(get_db)):
+    user_db = db.query(m.User).filter(
+        m.User.username == user.username
+    ).first()
+    if user_db:
+        raise HTTPException(400, "Логин уже занят!")
+    user_db = m.User()
+    user_db.firstname = user.firstname
+    user_db.lastname = user.lastname
+    user_db.username = user.username
+    user_db.password = bcrypt.hashpw(user.password.encode('utf-8'), bcrypt.gensalt())
+    user_db.role_id = user.role_id
+
+    db.add(user_db)
+    db.commit()
+    return user_db
+
+# Вход
+@app.post("/login")
+def user_auth(login: pyd.LoginUser, db: Session=Depends(get_db)):
+    user_db = db.query(m.User).filter(
+        m.User.username == login.username
+    ).first()
+    if not user_db:
+        raise HTTPException(404, "Пользователь не найден!")
+    if auth_handler.verify_password(login.password, user_db.password):
+        return {"token": auth_handler.encode_token(user_db.id)}
+    raise HTTPException(400, "Доступ запрещён!")
+
 
 # Товары
 # Получение товаров
@@ -40,7 +75,7 @@ def get_product(id:int, db:Session=Depends(get_db)):
 
 # Создание товара
 @app.post("/api/product", response_model=pyd.SchemeProduct)
-def create_product(product:pyd.CreateProduct, db:Session=Depends(get_db)):
+def create_product(product:pyd.CreateProduct, db:Session=Depends(get_db), user:m.User=Depends(auth_handler.auth_wrapper)):
     product_dublicate = db.query(m.Product).filter(
         m.Product.product_name == product.product_name
     ).first()

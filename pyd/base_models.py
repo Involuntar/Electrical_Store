@@ -28,6 +28,10 @@ class BaseUser(BaseModel):
     username:str=Field(example="1v4n")
 
 
+class BaseRole(BaseModel):
+    id:int=Field(example=1)
+    role_name:str=Field(example="Покупатель")
+
 class BaseStatus(BaseModel):
     id:int=Field(example=1)
     status_name:str=Field(example="В доставке")

@@ -20,6 +20,13 @@ class Product(Base):
 
     category = relationship("Category", backref="products")
 
+
+class Role(Base):
+    __tablename__="roles"
+    id=Column(Integer, primary_key=True, autoincrement=True)
+    role_name = Column(String(20), unique=True)
+
+
 class User(Base):
     __tablename__="users"
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -27,6 +34,9 @@ class User(Base):
     lastname = Column(String(20))
     username = Column(String(20))
     password = Column(String(255))
+    role_id = Column(Integer, ForeignKey("roles.id"))
+
+    role = relationship("Role", backref='users')
 
 
 class Status(Base):

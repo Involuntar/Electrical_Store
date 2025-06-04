@@ -11,3 +11,7 @@ class SchemeOrder(BaseOrder):
 class SchemeReview(BaseReview):
     user: BaseUser
     product: SchemeProduct
+
+
+class SchemeUser(BaseUser):
+    role: BaseRole
