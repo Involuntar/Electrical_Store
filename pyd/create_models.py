@@ -20,6 +20,9 @@ class CreateReview(BaseModel):
     product_id:int=Field(example=1)
     user_id:int=Field(example=1)
 
+class AcceptReview(BaseModel):
+    accepted:bool=Field(example=True)
+
 class CreateUser(BaseModel):
     firstname:str=Field(example="Иван")
     lastname:str=Field(example="Иванов")

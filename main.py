@@ -11,6 +11,10 @@ import bcrypt
 app=FastAPI()
 
 # Авторизация
+@app.get("/test")
+def test(manager:m.User=Depends(auth_handler.auth_wrapper)):
+    return manager
+
 # Регистрация
 @app.post("/register", response_model=pyd.SchemeUser)
 def  user_register(user: pyd.CreateUser, db:Session=Depends(get_db)):
@@ -39,7 +43,7 @@ def user_auth(login: pyd.LoginUser, db: Session=Depends(get_db)):
     if not user_db:
         raise HTTPException(404, "Пользователь не найден!")
     if auth_handler.verify_password(login.password, user_db.password):
-        return {"token": auth_handler.encode_token(user_db.id)}
+        return {"token": auth_handler.encode_token(user_db.id, user_db.role_id)}
     raise HTTPException(400, "Доступ запрещён!")
 
 
@@ -75,7 +79,7 @@ def get_product(id:int, db:Session=Depends(get_db)):
 
 # Создание товара
 @app.post("/api/product", response_model=pyd.SchemeProduct)
-def create_product(product:pyd.CreateProduct, db:Session=Depends(get_db), user:m.User=Depends(auth_handler.auth_wrapper)):
+def create_product(product:pyd.CreateProduct, db:Session=Depends(get_db), manager:m.User=Depends(auth_handler.manager_wrapper)):
     product_dublicate = db.query(m.Product).filter(
         m.Product.product_name == product.product_name
     ).first()
@@ -95,7 +99,7 @@ def create_product(product:pyd.CreateProduct, db:Session=Depends(get_db), user:m
 
 # Изменение товара
 @app.put("/api/product/{id}", response_model=pyd.SchemeProduct)
-def edit_product(id:int, product:pyd.CreateProduct, db:Session=Depends(get_db)):
+def edit_product(id:int, product:pyd.CreateProduct, db:Session=Depends(get_db), manager:m.User=Depends(auth_handler.manager_wrapper)):
     product_db = db.query(m.Product).filter(
         m.Product.id == id
     ).first()
@@ -113,7 +117,7 @@ def edit_product(id:int, product:pyd.CreateProduct, db:Session=Depends(get_db)):
 
 # Удаление товара
 @app.delete("/api/product/{id}")
-def delete_product(id:int, db:Session=Depends(get_db)):
+def delete_product(id:int, db:Session=Depends(get_db), manager:m.User=Depends(auth_handler.manager_wrapper)):
     product_db = db.query(m.Product).filter(
         m.Product.id == id
     ).first()
@@ -127,14 +131,14 @@ def delete_product(id:int, db:Session=Depends(get_db)):
 # Заказы
 # Получение заказов
 @app.get("/api/orders", response_model=List[pyd.SchemeOrder])
-def get_orders(db:Session=Depends(get_db)):
+def get_orders(db:Session=Depends(get_db), user:m.User=Depends(auth_handler.auth_wrapper)):
     orders = db.query(m.Order).all()
     return orders
 
 
 # Получение заказа
 @app.get("/api/order/{id}", response_model=pyd.SchemeOrder)
-def get_order(id:int, db:Session=Depends(get_db)):
+def get_order(id:int, db:Session=Depends(get_db), user:m.User=Depends(auth_handler.auth_wrapper)):
     order_db = db.query(m.Order).filter(
         m.Order.id == id
     ).first()
@@ -164,7 +168,7 @@ def create_order(order:pyd.CreateOrder, db:Session=Depends(get_db)):
 
 # Изменение заказа
 @app.put("/api/order/{id}", response_model=pyd.SchemeOrder)
-def edit_order(id:int, order:pyd.CreateOrder, db:Session=Depends(get_db)):
+def edit_order(id:int, order:pyd.CreateOrder, db:Session=Depends(get_db), manager:m.User=Depends(auth_handler.manager_wrapper)):
     order_db = db.query(m.Order).filter(
         m.Order.id == id
     ).first()
@@ -183,7 +187,7 @@ def edit_order(id:int, order:pyd.CreateOrder, db:Session=Depends(get_db)):
 
 # Удаление заказа
 @app.delete("/api/order/{id}")
-def delete_order(id:int, db:Session=Depends(get_db)):
+def delete_order(id:int, db:Session=Depends(get_db), manager:m.User=Depends(auth_handler.manager_wrapper)):
     order_db = db.query(m.Order).filter(
         m.Order.id == id
     ).first()
@@ -199,7 +203,9 @@ def delete_order(id:int, db:Session=Depends(get_db)):
 # Получение отзывов
 @app.get("/api/reviews", response_model=List[pyd.SchemeReview])
 def get_reviews(db:Session=Depends(get_db)):
-    reviews = db.query(m.Review).all()
+    reviews = db.query(m.Review).filter(
+        m.Review.accepted == True
+    ).all()
     if not reviews:
         raise HTTPException(404, "Отзывы не найдены!")
     return reviews
@@ -207,7 +213,7 @@ def get_reviews(db:Session=Depends(get_db)):
 
 # Получение отзыва
 @app.get("/api/review", response_model=pyd.SchemeReview)
-def get_review(id:int, db:Session=Depends(get_db)):
+def get_review(id:int, db:Session=Depends(get_db), user:m.User=Depends(auth_handler.auth_wrapper)):
     review_db = db.query(m.Review).filter(
         m.Review.id == id
     ).first()
@@ -218,7 +224,7 @@ def get_review(id:int, db:Session=Depends(get_db)):
 
 # Создание отзыва
 @app.post("/api/review", response_model=pyd.SchemeReview)
-def create_review(review:pyd.CreateReview, db:Session=Depends(get_db)):
+def create_review(review:pyd.CreateReview, db:Session=Depends(get_db), user:m.User=Depends(auth_handler.auth_wrapper)):
     review_db = m.Review()
     review_db.rating = review.rating
     review_db.product_id = review.product_id
@@ -232,7 +238,7 @@ def create_review(review:pyd.CreateReview, db:Session=Depends(get_db)):
 
 # Изменение отзыва
 @app.put("/api/review/{id}", response_model=pyd.SchemeReview)
-def edit_review(id:int, review:pyd.CreateReview, db:Session=Depends(get_db)):
+def edit_review(id:int, review:pyd.CreateReview, db:Session=Depends(get_db), user:m.User=Depends(auth_handler.auth_wrapper)):
     review_db = db.query(m.Review).filter(
         m.Review.id == id
     ).first()
@@ -247,10 +253,23 @@ def edit_review(id:int, review:pyd.CreateReview, db:Session=Depends(get_db)):
     db.commit()
     return review_db
 
+# Одобрение отзыва
+@app.patch("/api/review/{id}")
+def accept_review(id:int, review:pyd.AcceptReview, admin:m.User=Depends(auth_handler.admin_wrapper), db:Session=Depends(get_db)):
+    review_db = db.query(m.Review).filter(
+        m.Review.id == id
+    ).first()
+    if not review_db:
+        raise HTTPException(404, "Отзыв не найден!")
+    review_db.accepted = review.accepted
+
+    db.add(review_db)
+    db.commit()
+    return {'detail': 'Доступность отзыва изменена'}
 
 # Удаление отзыва
 @app.delete("/api/review/{id}")
-def delete_review(id:int, db:Session=Depends(get_db)):
+def delete_review(id:int, db:Session=Depends(get_db), user:m.User=Depends(auth_handler.auth_wrapper)):
     review_db = db.query(m.Review).filter(
         m.Review.id == id
     ).first()

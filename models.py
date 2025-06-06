@@ -1,5 +1,5 @@
 from database import Base
-from sqlalchemy import Column, Integer, String, Float, DECIMAL, ForeignKey, Text, Date
+from sqlalchemy import Column, Integer, String, Float, DECIMAL, ForeignKey, Text, Date, Boolean
 from sqlalchemy.orm import relationship
 
 
@@ -32,7 +32,7 @@ class User(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     firstname = Column(String(20))
     lastname = Column(String(20))
-    username = Column(String(20))
+    username = Column(String(20), unique=True)
     password = Column(String(255))
     role_id = Column(Integer, ForeignKey("roles.id"))
 
@@ -64,6 +64,7 @@ class Review(Base):
     user_id = Column(Integer, ForeignKey("users.id"))
     rating = Column(Float)
     description = Column(Text, nullable=True)
+    accepted = Column(Boolean, default=False)
 
     product = relationship("Product", backref="reviews")
     user = relationship("User", backref="reviews")

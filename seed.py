@@ -33,7 +33,12 @@ with Session(bind=engine) as session:
     session.add(r3)
 
     u1 = m.User(firstname="Иван", lastname="Иванов", username="1v4n", password=bcrypt.hashpw(b"Ivan", bcrypt.gensalt()), role_id=1)
+    u2 = m.User(firstname="Иван", lastname="Иванов", username="Van", password=bcrypt.hashpw(b"Ivan", bcrypt.gensalt()), role_id=2)
+    u3 = m.User(firstname="Иван", lastname="Иванов", username="Vanya", password=bcrypt.hashpw(b"Ivan", bcrypt.gensalt()), role_id=3)
+
     session.add(u1)
+    session.add(u2)
+    session.add(u3)
 
     p1 = m.Product(product_name="Самсунг", product_price="86000", 
                 category_id="1", amount="500")
