@@ -140,22 +140,27 @@ def get_orders(db:Session=Depends(get_db), user:m.User=Depends(auth_handler.auth
 @app.get("/api/order/{id}", response_model=pyd.SchemeOrder)
 def get_order(id:int, db:Session=Depends(get_db), user:m.User=Depends(auth_handler.auth_wrapper)):
     order_db = db.query(m.Order).filter(
-        m.Order.id == id
+        m.Order.id == id,
     ).first()
     if not order_db:
         raise HTTPException(404, "Заказ не найден!")
+    if order_db.user_id != user["user_id"]:
+        raise HTTPException(403, "Вы не можете просматривать чужой заказ!")
     return order_db
 
 
 # Создание заказа
 @app.post("/api/order", response_model=pyd.SchemeOrder)
-def create_order(order:pyd.CreateOrder, db:Session=Depends(get_db)):
+def create_order(order:pyd.CreateOrder, db:Session=Depends(get_db), user:m.User=Depends(auth_handler.auth_wrapper)):
     order_db = m.Order()
     user_db = db.query(m.User).filter(
         m.User.id == order.user_id
     ).first()
     if not user_db:
         raise HTTPException(404, "Пользователь не найден!")
+    if user["role_id"] not in [2, 3]:
+        if order.user_id != user["user_id"]:
+            raise HTTPException(403, "Вы не можете создать заказ на чужое имя!")
     order_db.user_id = order.user_id
     order_db.status_id = order.status_id
     order_db.summ = order.summ
@@ -168,13 +173,15 @@ def create_order(order:pyd.CreateOrder, db:Session=Depends(get_db)):
 
 # Изменение заказа
 @app.put("/api/order/{id}", response_model=pyd.SchemeOrder)
-def edit_order(id:int, order:pyd.CreateOrder, db:Session=Depends(get_db), manager:m.User=Depends(auth_handler.manager_wrapper)):
+def edit_order(id:int, order:pyd.CreateOrder, db:Session=Depends(get_db), user:m.User=Depends(auth_handler.auth_wrapper)):
     order_db = db.query(m.Order).filter(
         m.Order.id == id
     ).first()
     if not order_db:
         raise HTTPException(404, "Заказ не найден!")
-    
+    if user["role_id"] not in [2, 3]:
+        if order.user_id != user["user_id"]:
+            raise HTTPException(403, "Вы не можете изменять чужой заказ!")
     order_db.user_id = order.user_id
     order_db.status_id = order.status_id
     order_db.summ = order.summ
@@ -225,6 +232,14 @@ def get_review(id:int, db:Session=Depends(get_db), user:m.User=Depends(auth_hand
 # Создание отзыва
 @app.post("/api/review", response_model=pyd.SchemeReview)
 def create_review(review:pyd.CreateReview, db:Session=Depends(get_db), user:m.User=Depends(auth_handler.auth_wrapper)):
+    review_check = db.query(m.Review).filter(
+        m.Review.user_id == review.user_id,
+        m.Review.product_id == review.product_id
+    ).first()
+    if review_check:
+        raise HTTPException(400, "Вы уже оставляли отзыв на этот товар!")
+    if review.user_id != user["user_id"]:
+        raise HTTPException(403, "Вы не можете оставлять отзыв от чужого лица!")
     review_db = m.Review()
     review_db.rating = review.rating
     review_db.product_id = review.product_id
@@ -239,8 +254,11 @@ def create_review(review:pyd.CreateReview, db:Session=Depends(get_db), user:m.Us
 # Изменение отзыва
 @app.put("/api/review/{id}", response_model=pyd.SchemeReview)
 def edit_review(id:int, review:pyd.CreateReview, db:Session=Depends(get_db), user:m.User=Depends(auth_handler.auth_wrapper)):
+    if review.user_id != user["user_id"]:
+        raise HTTPException(403, "Вы не можете редактировать чужой отзыв!")
     review_db = db.query(m.Review).filter(
-        m.Review.id == id
+        m.Review.id == id,
+        m.Review.user_id == user["user_id"]
     ).first()
     if not review_db:
         raise HTTPException(404, "Отзыв не найден!")
