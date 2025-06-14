@@ -34,7 +34,7 @@ class User(Base):
     lastname = Column(String(20))
     username = Column(String(20), unique=True)
     password = Column(String(255))
-    role_id = Column(Integer, ForeignKey("roles.id"))
+    role_id = Column(Integer, ForeignKey("roles.id"), default=1)
 
     role = relationship("Role", backref='users')
 

@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field
 from datetime import date, datetime
+import re
 
 class CreateProduct(BaseModel):
     product_name:str=Field(example="Самсунг")
@@ -24,12 +25,11 @@ class AcceptReview(BaseModel):
     accepted:bool=Field(example=True)
 
 class CreateUser(BaseModel):
-    firstname:str=Field(example="Иван")
-    lastname:str=Field(example="Иванов")
-    username:str=Field(example="1v4n")
-    password:str=Field(example="1v4n")
-    role_id:int|None=Field(example=1, default=1)
+    firstname:str=Field(example="Иван", min_length=2)
+    lastname:str=Field(example="Иванов", min_length=2)
+    username:str=Field(example="1v4n", min_length=2, max_length=20)
+    password:str=Field(example="1v4n", min_length=8, max_length=20, pattern=re.compile(r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$"))
 
 class LoginUser(BaseModel):
-    username:str=Field(example="1v4n")
-    password:str=Field(example="1v4n")
+    username:str=Field(example="1v4n", min_length=2, max_length=20)
+    password:str=Field(example="1v4n", min_length=8, max_length=20, pattern=re.compile(r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$"))

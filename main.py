@@ -6,15 +6,14 @@ from typing import List
 import pyd
 from auth import auth_handler
 import bcrypt
+import logging
+from datetime import datetime as dt
 
+logging.basicConfig(level=logging.INFO, filename="logs.log",filemode="w")
 
 app=FastAPI()
 
 # Авторизация
-@app.get("/test")
-def test(manager:m.User=Depends(auth_handler.auth_wrapper)):
-    return manager
-
 # Регистрация
 @app.post("/register", response_model=pyd.SchemeUser)
 def  user_register(user: pyd.CreateUser, db:Session=Depends(get_db)):
@@ -28,10 +27,11 @@ def  user_register(user: pyd.CreateUser, db:Session=Depends(get_db)):
     user_db.lastname = user.lastname
     user_db.username = user.username
     user_db.password = bcrypt.hashpw(user.password.encode('utf-8'), bcrypt.gensalt())
-    user_db.role_id = user.role_id
 
     db.add(user_db)
     db.commit()
+
+    logging.info(f"{dt.now()} - User: {user_db.username} registred")
     return user_db
 
 # Вход
@@ -43,18 +43,25 @@ def user_auth(login: pyd.LoginUser, db: Session=Depends(get_db)):
     if not user_db:
         raise HTTPException(404, "Пользователь не найден!")
     if auth_handler.verify_password(login.password, user_db.password):
-        return {"token": auth_handler.encode_token(user_db.id, user_db.role_id)}
+        logging.info(f"{dt.now()} - User: {user_db.username} loggined")
+        return {"token": auth_handler.encode_token(user_db.id, user_db.role_id, user_db.username)}
+    logging.info(f"{dt.now()} - User: {user_db.username} fail authentication")
     raise HTTPException(400, "Доступ запрещён!")
 
 
 # Товары
 # Получение товаров
 @app.get("/api/products", response_model=List[pyd.SchemeProduct])
-def get_products(limit:None|int=Query(None), page:None|int=Query(1), category:None|int=Query(None), minPrice:None|float=Query(None), db:Session=Depends(get_db)):
+def get_products(limit:None|int=Query(None, le=100), page:None|int=Query(1), category:None|str=Query(None), minPrice:None|float=Query(None), db:Session=Depends(get_db)):
     products = db.query(m.Product)
     if category:
+        category_db = db.query(m.Category).filter(
+            m.Category.category_name == category
+        ).first()
+        if not category_db:
+            raise HTTPException(404, "Категория не найдена!")
         products = products.filter(
-            m.Product.category_id == category
+            m.Product.category_id == category_db.id
         )
     if minPrice:
         products = products.filter(
@@ -97,6 +104,8 @@ def create_product(product:pyd.CreateProduct, db:Session=Depends(get_db), manage
 
     db.add(product_db)
     db.commit()
+
+    logging.info(f"{dt.now()} - User: {manager["user_id"]} - {manager["username"]} create product: {product_db.product_name}")
     return product_db
 
 
@@ -116,6 +125,8 @@ def edit_product(id:int, product:pyd.CreateProduct, db:Session=Depends(get_db), 
 
     db.add(product_db)
     db.commit()
+
+    logging.info(f"{dt.now()} - User: {manager["user_id"]} - {manager["username"]} change product: {product_db.product_name}")
     return product_db
 
 # Удаление товара
@@ -128,6 +139,8 @@ def delete_product(id:int, db:Session=Depends(get_db), manager:m.User=Depends(au
         raise HTTPException(404, "Товар не найден!")
     db.delete(product_db)
     db.commit()
+
+    logging.info(f"{dt.now()} - User: {manager["user_id"]} - {manager["username"]} delete product: {product_db.product_name}")
     return {"detail": "Товар удалён!"}
 
 
@@ -148,6 +161,7 @@ def get_order(id:int, db:Session=Depends(get_db), user:m.User=Depends(auth_handl
     if not order_db:
         raise HTTPException(404, "Заказ не найден!")
     if order_db.user_id != user["user_id"]:
+        logging.info(f"{dt.now()} - User: {user["user_id"]} - {user["username"]} try watch order of User: {order_db.user_id}")
         raise HTTPException(403, "Вы не можете просматривать чужой заказ!")
     return order_db
 
@@ -163,6 +177,7 @@ def create_order(order:pyd.CreateOrder, db:Session=Depends(get_db), user:m.User=
         raise HTTPException(404, "Пользователь не найден!")
     if user["role_id"] not in [2, 3]:
         if order.user_id != user["user_id"]:
+            logging.info(f"{dt.now()} - User: {user["user_id"]} - {user["username"]} try create order from User: {order.user_id}")
             raise HTTPException(403, "Вы не можете создать заказ на чужое имя!")
     order_db.user_id = order.user_id
     order_db.status_id = order.status_id
@@ -171,6 +186,8 @@ def create_order(order:pyd.CreateOrder, db:Session=Depends(get_db), user:m.User=
 
     db.add(order_db)
     db.commit()
+
+    logging.info(f"{dt.now()} - User: {user["user_id"]} - {user["username"]} create order: {order_db.id}")
     return order_db
 
 
@@ -184,6 +201,7 @@ def edit_order(id:int, order:pyd.CreateOrder, db:Session=Depends(get_db), user:m
         raise HTTPException(404, "Заказ не найден!")
     if user["role_id"] not in [2, 3]:
         if order.user_id != user["user_id"]:
+            logging.info(f"{dt.now()} - User: {user["user_id"]} - {user["username"]} try create order from User: {order.user_id}")
             raise HTTPException(403, "Вы не можете изменять чужой заказ!")
     order_db.user_id = order.user_id
     order_db.status_id = order.status_id
@@ -192,6 +210,8 @@ def edit_order(id:int, order:pyd.CreateOrder, db:Session=Depends(get_db), user:m
 
     db.add(order_db)
     db.commit()
+
+    logging.info(f"{dt.now()} - User: {user["user_id"]} - {user["username"]} change order: {order_db.id}")
     return order_db
 
 
@@ -206,6 +226,8 @@ def delete_order(id:int, db:Session=Depends(get_db), manager:m.User=Depends(auth
     
     db.delete(order_db)
     db.commit()
+
+    logging.info(f"{dt.now()} - User: {manager["user_id"]} - {manager["username"]} create order: {order_db.id}")
     return {"detail": "Заказ удалён"}
 
 
@@ -242,6 +264,7 @@ def create_review(review:pyd.CreateReview, db:Session=Depends(get_db), user:m.Us
     if review_check:
         raise HTTPException(400, "Вы уже оставляли отзыв на этот товар!")
     if review.user_id != user["user_id"]:
+        logging.info(f"{dt.now()} - User: {user["user_id"]} - {user["username"]} try create review from User: {review.user_id}")
         raise HTTPException(403, "Вы не можете оставлять отзыв от чужого лица!")
     review_db = m.Review()
     review_db.rating = review.rating
@@ -251,6 +274,8 @@ def create_review(review:pyd.CreateReview, db:Session=Depends(get_db), user:m.Us
 
     db.add(review_db)
     db.commit()
+
+    logging.info(f"{dt.now()} - User: {user["user_id"]} - {user["username"]} create review: {review_db.id}")
     return review_db
 
 
@@ -258,6 +283,7 @@ def create_review(review:pyd.CreateReview, db:Session=Depends(get_db), user:m.Us
 @app.put("/api/review/{id}", response_model=pyd.SchemeReview)
 def edit_review(id:int, review:pyd.CreateReview, db:Session=Depends(get_db), user:m.User=Depends(auth_handler.auth_wrapper)):
     if review.user_id != user["user_id"]:
+        logging.info(f"{dt.now()} - User: {user["user_id"]} - {user["username"]} try change review: {id}")
         raise HTTPException(403, "Вы не можете редактировать чужой отзыв!")
     review_db = db.query(m.Review).filter(
         m.Review.id == id,
@@ -272,6 +298,8 @@ def edit_review(id:int, review:pyd.CreateReview, db:Session=Depends(get_db), use
 
     db.add(review_db)
     db.commit()
+
+    logging.info(f"{dt.now()} - User: {user["user_id"]} - {user["username"]} change review: {review_db.id}")
     return review_db
 
 # Одобрение отзыва
@@ -286,6 +314,8 @@ def accept_review(id:int, review:pyd.AcceptReview, admin:m.User=Depends(auth_han
 
     db.add(review_db)
     db.commit()
+
+    logging.info(f"{dt.now()} - User: {admin["user_id"]} - {admin["username"]} change review visibility: {review_db.id}")
     return {'detail': 'Доступность отзыва изменена'}
 
 # Удаление отзыва
@@ -299,4 +329,6 @@ def delete_review(id:int, db:Session=Depends(get_db), user:m.User=Depends(auth_h
     
     db.delete(review_db)
     db.commit()
+
+    logging.info(f"{dt.now()} - User: {user["user_id"]} - {user["username"]} delete review: {review_db.id}")
     return {"detail": "Отзыв удалён"}
