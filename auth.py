@@ -1,6 +1,5 @@
-from fastapi import HTTPException, Depends, Security
+from fastapi import HTTPException, Security
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from sqlalchemy.orm import Session
 from database import get_db
 from passlib.context import CryptContext
 import datetime

@@ -62,6 +62,9 @@ def get_products(limit:None|int=Query(None), page:None|int=Query(1), category:No
         )
     if limit:
         products = products[(page - 1) * limit:page * limit]
+        if not products:
+            raise HTTPException(404, "Товары не найдены!")
+        return products
     all_product = products.all()
     if not all_product:
         raise HTTPException(404, "Товары не найдены!")
