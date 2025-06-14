@@ -3,14 +3,14 @@ from datetime import date, datetime
 import re
 
 class CreateProduct(BaseModel):
-    product_name:str=Field(example="Самсунг")
-    product_price:float=Field(example=86000)
+    product_name:str=Field(example="Самсунг", min_length=2)
+    product_price:float=Field(example=86000, gt=0)
     description:str|None=Field(example="Описание", default=None)
     category_id:int=Field(example="1")
-    amount:int=Field(example=500)
+    amount:int=Field(example=500, ge=0)
 
 class CreateOrder(BaseModel):
-    summ:float=Field(example=21673, ge=0)
+    summ:float=Field(example=21673, gt=0)
     order_date:date=Field(example="2025-06-11", default=datetime.now().strftime("%Y-%m-%d"))
     user_id:int=Field(example=1)
     status_id:int=Field(example=1, default=1)

@@ -244,7 +244,7 @@ def get_reviews(db:Session=Depends(get_db)):
 
 
 # Получение отзыва
-@app.get("/api/review", response_model=pyd.SchemeReview)
+@app.get("/api/review/{id}", response_model=pyd.SchemeReview)
 def get_review(id:int, db:Session=Depends(get_db), user:m.User=Depends(auth_handler.auth_wrapper)):
     review_db = db.query(m.Review).filter(
         m.Review.id == id
