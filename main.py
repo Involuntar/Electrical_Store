@@ -320,12 +320,16 @@ def accept_review(id:int, review:pyd.AcceptReview, admin:m.User=Depends(auth_han
 
 # Удаление отзыва
 @app.delete("/api/review/{id}")
-def delete_review(id:int, db:Session=Depends(get_db), user:m.User=Depends(auth_handler.auth_wrapper)):
+def delete_review(id:int, db:Session=Depends(get_db), user:m.User=Depends(auth_handler.admin_wrapper)):
     review_db = db.query(m.Review).filter(
         m.Review.id == id
     ).first()
     if not review_db:
         raise HTTPException(404, "Отзыв не найден!")
+
+    if review_db.user_id != user["user_id"]:
+        if user["role_id"] != 3:
+            raise HTTPException(403, "Вы не можете удалить чужой отзыв!")
     
     db.delete(review_db)
     db.commit()
