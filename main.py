@@ -320,7 +320,7 @@ def accept_review(id:int, review:pyd.AcceptReview, admin:m.User=Depends(auth_han
 
 # Удаление отзыва
 @app.delete("/api/review/{id}")
-def delete_review(id:int, db:Session=Depends(get_db), user:m.User=Depends(auth_handler.admin_wrapper)):
+def delete_review(id:int, db:Session=Depends(get_db), user:m.User=Depends(auth_handler.auth_wrapper)):
     review_db = db.query(m.Review).filter(
         m.Review.id == id
     ).first()
